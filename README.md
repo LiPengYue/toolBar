@@ -11,9 +11,9 @@
 ```
 **二、其实你直接这样创建就会出来这种效果：**
 
->![](http://upload-images.jianshu.io/upload_images/4185621-a7f7756c67557e9f.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
-@implementation ViewController
+
 ```
+@implementation ViewController
 - (void)viewDidLoad {
     [super viewDidLoad];
     self.view.backgroundColor = [UIColor lightGrayColor];
