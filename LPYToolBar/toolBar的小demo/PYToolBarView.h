@@ -30,16 +30,16 @@
 @property (nonatomic,assign) NSInteger selectItemIndex;
 
 
-#pragma mark - line参数
+#pragma mark - lien参数
 //--------------------------------------线----------------------
 /**线宽*/
-@property (nonatomic,assign) CGFloat lineWidth;
+@property (nonatomic,assign) CGFloat lienWidth;
 /**线高度*/
-@property (nonatomic,assign) CGFloat lineHeight;
+@property (nonatomic,assign) CGFloat lienHeight;
 /**线的颜色集合**/
-@property (nonatomic,assign) CGFloat *lineColorArray;
+@property (nonatomic,assign) CGFloat *lienColorArray;
 /**线的颜色**/
-@property (nonatomic,strong) UIColor *lineColor;
+@property (nonatomic,strong) UIColor *lienColor;
 
 
 #pragma mark - item参数
@@ -62,7 +62,7 @@
 @property (nonatomic,strong) UIColor *itemTextColor_Select;
 @property (nonatomic,strong) UIColor *itemTextColor_Normal;
 @property (nonatomic,strong) UIColor *itemTextColor_Highlighted;
-
+@property (nonatomic,strong) UIFont *itemTextFont;
 
 
 #pragma mark - 其他设置
@@ -77,11 +77,29 @@
    view默认是隐藏的
    view具有默认样式
  */
-@property (nonatomic,assign) CGFloat itemBottomBarViewWidth;//宽度默认与item等宽
+@property (nonatomic,assign) CGFloat itemBottomBarViewWidth;//距离两边的距离，宽度默认与item等宽
 @property (nonatomic,assign) CGFloat itemBottomBarViewHeight;//高度默认是2dp
 //颜色默认蓝(r:0.29 g:0.56 b:0.89 a:1.00)
 @property (nonatomic,strong) UIColor *itemBottomBarViewColor;
 
 /**关于item底部的view自定义*/
 @property (nonatomic,copy) void(^setUpItemSelectBarViewBlock)(UIView *barView);
+
+
+
+#pragma mark - itemBottomBarView 带动画
+/**是否动画*/
+@property (nonatomic,assign) BOOL isAnima_ItemBottomBarView;
+/**动画的时长*/
+@property (nonatomic,assign) CGFloat animaTime_ItemBottomBarView;
+/**自定义TimeButtonBar动画 - 可以定义选中的tiem的动画*/
+//开始
+@property (nonatomic,copy) void (^animaItemButtonBarAnima_start)(UIButton *animaView);
+//完成
+@property (nonatomic,copy) void (^animaItemButtonBarAnima_completion)(UIButton *animaView);
+
+//动画的view
+@property (nonatomic,strong) UIView *itemBarAnimaView;
+@property (nonatomic,strong) UIColor *itemBarAnimaViewColor;
+
 @end

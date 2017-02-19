@@ -10,11 +10,12 @@
 
 @interface PYToolBarView ()
 @property(nonatomic,assign) CGFloat spacing;//
-@property (nonatomic,strong) NSArray <NSValue *>*lineArray;//线的集合（位置大小）
+@property (nonatomic,strong) NSArray <NSValue *>*lienArray;//线的集合（位置大小）
 @property (nonatomic,strong) NSMutableArray <NSDictionary *>*optionArray;//button的位置及名称集合
 @property (nonatomic,strong) NSMutableArray <NSValue *>*optionRectArrayM;
 //记忆选中的Button
 @property (nonatomic,strong) UIButton *selectItem;
+
 @end
 
 @implementation PYToolBarView
@@ -44,15 +45,22 @@
         [self layoutIfNeeded];
     }
     //选项Button的宽度
-    _optionWidth = (self.frame.size.width - (self.optionStrArray.count - 1) * self.lineWidth) / self.optionStrArray.count;
+    _optionWidth = (self.frame.size.width - (self.optionStrArray.count - 1) * self.lienWidth) / self.optionStrArray.count;
+    
+
+    
     //线的信息数组
-    [self setLineArrayInfo];
+    [self setLienArrayInfo];
     
     //设置选项的信息
     [self setOptionItemArrayInfo];
     
     //创建button
     [self setSubButton];
+    
+    //创建动画的view
+   
+    //[self setupAnimaBarView];
     
     //重绘
     [self setNeedsDisplay];
@@ -63,8 +71,6 @@
 //计算了画线的信息（CGRect）
 - (void) setOptionStrArray:(NSArray<NSString *> *)optionStrArray {
     _optionStrArray = optionStrArray;
-    //清除数据
-    self.itemBottomBarViewWidth = 0;
     [self show];
 }
 
@@ -73,26 +79,26 @@
 - (void)drawRect:(CGRect)rect {
     [super drawRect:rect];
     if(!self.optionStrArray.count) return;//没数据有返回
-    for (int i = 0; i < self.lineArray.count; i++) {
+    for (int i = 0; i < self.lienArray.count; i++) {
         //划线
-        [self.lineColor setFill];
-        UIRectFill(self.lineArray[i].CGRectValue);
+        [self.lienColor setFill];
+        UIRectFill(self.lienArray[i].CGRectValue);
     }
 }
 
 
 #pragma mark - 设置一些线/选项 信息
 //MARK: 设置线的信息数组
-- (void)setLineArrayInfo{
-    NSMutableArray *lineArrayM = [[NSMutableArray alloc]init];
+- (void)setLienArrayInfo{
+    NSMutableArray *lienArrayM = [[NSMutableArray alloc]init];
     for (int i = 1; i < self.optionStrArray.count; i++) {
         //线的XY坐标
-        CGFloat lineX = (i * self.optionWidth) + ((i - 1) * self.lineWidth);
-        CGFloat lineY = (self.frame.size.height - self.lineHeight) /2;
-        CGRect lineRect = CGRectMake(lineX, lineY, self.lineWidth, self.lineHeight);
-        [lineArrayM addObject:[NSValue valueWithCGRect:lineRect]];
+        CGFloat lienX = (i * self.optionWidth) + ((i - 1) * self.lienWidth);
+        CGFloat lienY = (self.frame.size.height - self.lienHeight) /2;
+        CGRect lienRect = CGRectMake(lienX, lienY, self.lienWidth, self.lienHeight);
+        [lienArrayM addObject:[NSValue valueWithCGRect:lienRect]];
     }
-    self.lineArray = lineArrayM.copy;
+    self.lienArray = lienArrayM.copy;
 }
 
 //设置选项信息数组
@@ -102,7 +108,7 @@
     NSMutableArray <NSValue *>*optionRectArrayM = [[NSMutableArray alloc] init];
    
     for (int i = 0; i < self.optionStrArray.count; i++) {
-        CGFloat opstionX = i * (self.lineWidth + self.optionWidth);
+        CGFloat opstionX = i * (self.lienWidth + self.optionWidth);
         CGFloat opstionY = 0;
         CGRect opstionRect = CGRectMake(opstionX, opstionY, self.optionWidth, self.frame.size.height);
         NSValue *optionRectValue = [NSValue valueWithCGRect:opstionRect];
@@ -142,6 +148,8 @@
         [button setTitleColor:self.itemTextColor_Normal forState:UIControlStateNormal];
         [button setTitleColor:self.itemTextColor_Select forState:UIControlStateSelected];
         [button setTitleColor:self.itemTextColor_Highlighted forState:UIControlStateHighlighted];
+        //字体大小
+        button.titleLabel.font = self.itemTextFont;
         //对齐方法
         button.titleLabel.textAlignment = NSTextAlignmentCenter;
         //是否变灰
@@ -151,9 +159,10 @@
         //添加view的条
         UIView *barView = [[UIView alloc]init];
         //宽度 坐标
-        CGFloat barViewX = (button.frame.size.width - self.itemBottomBarViewWidth) / 2;
+        CGFloat barViewX = self.itemBottomBarViewWidth;
+        
         CGFloat barViewY = button.frame.size.height - self.itemBottomBarViewHeight;
-        barView.frame = CGRectMake(barViewX, barViewY, self.itemBottomBarViewWidth, self.itemBottomBarViewHeight);
+        barView.frame = CGRectMake(barViewX, barViewY, button.frame.size.width - self.itemBottomBarViewWidth * 2, self.itemBottomBarViewHeight);
         barView.backgroundColor = self.itemBottomBarViewColor;
        
         if (self.setUpItemSelectBarViewBlock) {
@@ -164,9 +173,18 @@
         barView.tag = 2000;
         //设置默认的选中的item
         if (i == self.selectItemIndex) {
+            if (self.isAnima_ItemBottomBarView) {
+                barView.hidden = YES;
+            }else {
+                barView.hidden = NO;
+            }
+            if (self.isAnima_ItemBottomBarView) {
+                [self setupAnimaBarView];
+                self.itemBarAnimaView.transform = CGAffineTransformMakeTranslation(i * button.frame.size.width, 0);
+            }
+            
             button.selected = YES;
             self.selectItem = button;
-            barView.hidden = NO;
         }
         [optionItemInfoM arrayByAddingObject:button];
     }
@@ -181,6 +199,39 @@
     if (self.clickOptionItemBlock) {
         self.clickOptionItemBlock(button,self.optionStrArray[button.tag - 1000],button.tag - 1000);
     }
+   
+    //如果自定义了动画
+    if (self.isAnima_ItemBottomBarView || (self.animaItemButtonBarAnima_completion && self.animaItemButtonBarAnima_start)) {
+        [UIView animateWithDuration:self.animaTime_ItemBottomBarView animations:^{
+            if (self.animaItemButtonBarAnima_start) {
+                self.animaItemButtonBarAnima_start(button);
+            }
+            self.itemBarAnimaView.transform = CGAffineTransformMakeTranslation(button.frame.origin.x, 0);
+        } completion:^(BOOL finished) {
+            if (self.animaItemButtonBarAnima_completion) {
+                self.animaItemButtonBarAnima_completion(button);
+            }
+        }];
+    }
+    
+}
+
+- (void)setupAnimaBarView {
+        CGFloat barAnimaViewH = 2;
+        CGFloat barAnimaViewX = self.frame.size.width/self.optionStrArray.count * self.selectItemIndex;
+        CGFloat barAnimaViewY = self.frame.size.height - barAnimaViewH;
+        CGFloat barAnimaViewW = self.frame.size.width/self.optionStrArray.count;
+        
+
+        self.itemBarAnimaView = [[UIView alloc]initWithFrame:CGRectMake( barAnimaViewX, barAnimaViewY, barAnimaViewW, barAnimaViewH)];
+        
+        if (!self.itemBarAnimaViewColor) {
+            self.itemBarAnimaViewColor = [UIColor yellowColor];
+        }
+        
+        self.itemBarAnimaView.backgroundColor = self.itemBarAnimaViewColor;
+        //下部的view （参与动画）
+        [self addSubview: self.itemBarAnimaView];
 }
 
 
@@ -192,25 +243,25 @@
 #pragma mark - 懒加载 对某些属性做了默认值处理
 //设置初始值
 
-//MARK: 设置----------------line---------------------
-- (CGFloat)lineWidth {
-    if (!_lineWidth) {
-        _lineWidth = .5;
+//MARK: 设置----------------lien---------------------
+- (CGFloat)lienWidth {
+    if (!_lienWidth) {
+        _lienWidth = .5;
     }
-    return _lineWidth;
+    return _lienWidth;
 }
-- (CGFloat)lineHeight {
-    if (!_lineHeight) {
+- (CGFloat)lienHeight {
+    if (!_lienHeight) {
         if (!self.frame.size.height) [self layoutIfNeeded];//没有值就刷新UI
-        _lineHeight = self.frame.size.height;
+        _lienHeight = self.frame.size.height;
     }
-    return _lineHeight;
+    return _lienHeight;
 }
-- (NSArray <NSValue *>*)lineArray {
-    if (!_lineArray) {
-        _lineArray = [[NSArray alloc] init];
+- (NSArray <NSValue *>*)lienArray {
+    if (!_lienArray) {
+        _lienArray = [[NSArray alloc] init];
     }
-    return _lineArray;
+    return _lienArray;
 }
 
 
@@ -255,12 +306,7 @@
     }
     return _itemBottomBarViewHeight;
 }
-- (CGFloat)itemBottomBarViewWidth {
-    if (!_itemBottomBarViewWidth) {
-        _itemBottomBarViewWidth = self.optionRectArrayM[0].CGRectValue.size.width;
-    }
-    return _itemBottomBarViewWidth;
-}
+
 - (UIColor *)itemBottomBarViewColor {
     if (!_itemBottomBarViewColor) {
         //(r:0.29 g:0.56 b:0.89 a:1.00)
@@ -269,9 +315,33 @@
     return _itemBottomBarViewColor;
 }
 
+- (CGFloat)animaTime_ItemBottomBarView {
+    if (!_animaTime_ItemBottomBarView) {
+        _animaTime_ItemBottomBarView = 0;
+    }
+    return _animaTime_ItemBottomBarView;
+}
+- (UIFont *)itemTextFont {
+    if (!_itemTextFont) {
+        _itemTextFont = [UIFont systemFontOfSize:20];
+    }
+    return _itemTextFont;
+}
+
 //MARK: ------------------选中的item------------------------
+- (void)setIsAnima_ItemBottomBarView:(BOOL)isAnima_ItemBottomBarView {
+    _isAnima_ItemBottomBarView = isAnima_ItemBottomBarView;
+    if (_isAnima_ItemBottomBarView) {
+        
+    }
+}
+
 - (void)setSelectItemIndex:(NSInteger)selectItemIndex {
     _selectItemIndex = selectItemIndex;
+    [UIView animateWithDuration:self.animaTime_ItemBottomBarView animations:^{ 
+        self.itemBarAnimaView.transform = CGAffineTransformMakeTranslation(self.optionWidth * selectItemIndex, 0);
+    }];
+    
     self.selectItem = [self viewWithTag:selectItemIndex + 1000];
 }
 - (void)setSelectItem:(UIButton *)selectItem {
@@ -285,8 +355,11 @@
     _selectItem.selected = NO;
     
     _selectItem = selectItem;
-    
+   
     [_selectItem viewWithTag:2000].hidden = NO;
+    if (self.isAnima_ItemBottomBarView) {
+        [_selectItem viewWithTag:2000].hidden = YES;
+    }
     _selectItem.selected = YES;
 }
 @end
